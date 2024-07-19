@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { ref, computed } from 'vue'
 import { type TASK_STATUS, type ITask } from '@/types/ITask'
 import TasksKanban from '@/components/TasksKanban.vue'
 import TasksTable from '@/components/TasksTable.vue'
@@ -19,8 +19,10 @@ const addRandomStatusToObjects = (arr: ITask[]): ITask[] => {
   }))
 }
 
-const generateUniqueId = (baseId: number | string | undefined, index: number): string => {
-  return `${String(baseId || 'undefined')}_${index}`
+export const generateUniqueId = (baseId: number | string | undefined, index: number): string => {
+  const timestamp = new Date().getTime(); 
+  const randomSuffix = Math.floor(Math.random() * 10000); 
+  return `${String(baseId || 'undefined')}_${timestamp}_${randomSuffix}_${index}`;
 }
 
 const multiplyArray = (arr: ITask[], times: number): ITask[] => {
@@ -37,39 +39,38 @@ const multiplyArray = (arr: ITask[], times: number): ITask[] => {
 
   return result
 }
-type ComponentType = typeof TasksKanban | typeof TasksTable
 
 export const useTasksStore = defineStore('tasks', () => {
-    const taskSwitch = ref(true)
-//   const tasksFormat = shallowRef<ComponentType>(TasksTable)
-const tasksFormat = computed<ComponentType>(() => {
-    return taskSwitch.value ? TasksTable : TasksKanban;
-  });
+  const taskSwitch = ref(true)
+  const tasksFormat = computed(() => taskSwitch.value ? TasksTable : TasksKanban)
   const loader = ref(false)
   const tasks = ref<ITask[]>([])
 
   const getTasks = async () => {
     loader.value = true
-    const res = await fetch(url)
-      .then((res) => res.json())
-      .catch((error) => {
-        console.log(error)
-        return []
-      })
-
-    tasks.value = multiplyArray(addRandomStatusToObjects(res), 100)
-    loader.value = false
+    try {
+      const res = await fetch(url)
+      const data = await res.json()
+      tasks.value = multiplyArray(addRandomStatusToObjects(data), 100)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      loader.value = false
+    }
   }
 
   const editItem = (item: ITask) => {
-    const index = tasks.value.indexOf(item)
+    const index = tasks.value.findIndex(task => task.id === item.id)
     if (index !== -1) {
       tasks.value[index] = { ...tasks.value[index], ...item }
     }
   }
 
   const deleteItem = (id: number) => {
-    tasks.value.splice(id, 1)
+    const index = tasks.value.findIndex(task => task.id === id)
+    if (index !== -1) {
+      tasks.value.splice(index, 1)
+    }
   }
 
   const save = (editedItem: ITask, editedIndex: number) => {
@@ -80,5 +81,14 @@ const tasksFormat = computed<ComponentType>(() => {
     }
   }
 
-  return { loader, tasks, getTasks, tasksFormat, editItem, deleteItem, save, taskSwitch }
+  const updateTaskStatus = (id: number, newStatus: TASK_STATUS) => {
+    const index = tasks.value.findIndex(task => task.id === id)
+    if (index !== -1) {
+      tasks.value[index].task_status = newStatus
+    } else {
+      console.warn('Task not found')
+    }
+  }
+
+  return { loader, tasks, getTasks, tasksFormat, editItem, deleteItem, save, taskSwitch, updateTaskStatus }
 })

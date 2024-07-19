@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { useTasksStore } from '@/stores/task/TasksStore'
+import { useTasksStore, generateUniqueId  } from '@/stores/task/TasksStore'
 import { type ITask } from '@/types/ITask'
 
 const tasksStore = useTasksStore()
@@ -55,9 +55,12 @@ watch(dialogDelete, (val) => {
 })
 
 const editItem = (item: ITask) => {
-  editedIndex.value = tasksStore.tasks.indexOf(item)
-  Object.assign(editedItem, item)
-  dialog.value = true
+  editedIndex.value = tasksStore.tasks.indexOf(item);
+  Object.assign(editedItem, {
+    ...item,
+    id: item.id || undefined // устанавливаем текущий id или undefined, если его нет
+  });
+  dialog.value = true;
 }
 
 const deleteItem = (item: ITask) => {
@@ -67,8 +70,10 @@ const deleteItem = (item: ITask) => {
 }
 
 const deleteItemConfirm = () => {
-  tasksStore.deleteItem(editedIndex.value)
-  closeDelete()
+  if (editedItem.id) {
+    tasksStore.deleteItem(editedItem.id)
+    closeDelete()
+  }
 }
 
 const close = () => {
@@ -88,8 +93,16 @@ const closeDelete = () => {
 }
 
 const save = () => {
-  tasksStore.save(editedItem, editedIndex.value)
-  close()
+  const id = editedItem.id ? editedItem.id : undefined; // используем текущий id или undefined
+  const newId = generateUniqueId(id, editedIndex.value); // генерируем уникальный id
+
+  const newItem: ITask = {
+    ...editedItem,
+    id: newId
+  };
+
+  tasksStore.save(newItem, editedIndex.value);
+  close();
 }
 </script>
 
@@ -97,7 +110,7 @@ const save = () => {
   <v-data-table
     :headers="headers"
     :items="filteredTasks"
-    item-value="name"
+    item-value="id"
     show-expand
     v-model:expanded="expanded"
   >
