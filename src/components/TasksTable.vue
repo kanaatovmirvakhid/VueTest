@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick } from 'vue'
-import { useTasksStore, generateUniqueId  } from '@/stores/task/TasksStore'
+import { useTasksStore, generateUniqueId } from '@/stores/task/TasksStore'
 import { type ITask } from '@/types/ITask'
 
 const tasksStore = useTasksStore()
@@ -16,10 +16,8 @@ const filteredTasks = computed(() => {
 
   const query = searchQuery.value.toLowerCase()
 
-  return tasksStore.tasks.filter(task => {
-    return Object.values(task).some(value =>
-      String(value).toLowerCase().includes(query)
-    )
+  return tasksStore.tasks.filter((task) => {
+    return Object.values(task).some((value) => String(value).toLowerCase().includes(query))
   })
 })
 
@@ -28,20 +26,20 @@ const editedItem = reactive<ITask>({
   name: '',
   task_title: '',
   task_description: '',
-  task_status: '',
+  task_status: ''
 })
 const defaultItem: ITask = {
   name: '',
   task_title: '',
   task_description: '',
-  task_status: '',
+  task_status: ''
 }
 
 const headers = computed(() => [
   { title: 'Name', align: 'start', key: 'name' },
   { title: 'Title', key: 'task_title' },
   { title: 'Status', key: 'task_status' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions', sortable: false }
 ])
 
 const formTitle = computed(() => (editedIndex.value === -1 ? 'New Item' : 'Edit Item'))
@@ -55,12 +53,12 @@ watch(dialogDelete, (val) => {
 })
 
 const editItem = (item: ITask) => {
-  editedIndex.value = tasksStore.tasks.indexOf(item);
+  editedIndex.value = tasksStore.tasks.indexOf(item)
   Object.assign(editedItem, {
     ...item,
     id: item.id || undefined // устанавливаем текущий id или undefined, если его нет
-  });
-  dialog.value = true;
+  })
+  dialog.value = true
 }
 
 const deleteItem = (item: ITask) => {
@@ -93,16 +91,16 @@ const closeDelete = () => {
 }
 
 const save = () => {
-  const id = editedItem.id ? editedItem.id : undefined; // используем текущий id или undefined
-  const newId = generateUniqueId(id, editedIndex.value); // генерируем уникальный id
+  const id = editedItem.id ? editedItem.id : undefined // используем текущий id или undefined
+  const newId = generateUniqueId(id, editedIndex.value) // генерируем уникальный id
 
   const newItem: ITask = {
     ...editedItem,
     id: newId
-  };
+  }
 
-  tasksStore.save(newItem, editedIndex.value);
-  close();
+  tasksStore.save(newItem, editedIndex.value)
+  close()
 }
 </script>
 
@@ -121,9 +119,7 @@ const save = () => {
         <v-spacer></v-spacer>
         <v-dialog v-model="dialog" max-width="500px">
           <template v-slot:activator="{ props }">
-            <v-btn class="mb-2" color="primary" dark v-bind="props">
-              New Item
-            </v-btn>
+            <v-btn class="mb-2" color="primary" dark v-bind="props"> New Item </v-btn>
             <v-spacer></v-spacer>
             <v-text-field label="Search" class="mt-5" v-model="searchQuery"></v-text-field>
           </template>
@@ -142,13 +138,16 @@ const save = () => {
                     <v-text-field v-model="editedItem.task_title" label="Task title"></v-text-field>
                   </v-col>
                   <v-col cols="12" md="4" sm="6">
-                    <v-text-field v-model="editedItem.task_description" label="Task description"></v-text-field>
+                    <v-text-field
+                      v-model="editedItem.task_description"
+                      label="Task description"
+                    ></v-text-field>
                   </v-col>
                   <v-col cols="12" md="4" sm="6">
                     <v-select
-                        v-model="editedItem.task_status"
-                        label="Task status"
-                        :items="['To do', 'In progress', 'Done']"
+                      v-model="editedItem.task_status"
+                      label="Task status"
+                      :items="['To do', 'In progress', 'Done']"
                     ></v-select>
                   </v-col>
                 </v-row>
@@ -157,12 +156,8 @@ const save = () => {
 
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="close">
-                Cancel
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="save">
-                Save
-              </v-btn>
+              <v-btn color="blue-darken-1" variant="text" @click="close"> Cancel </v-btn>
+              <v-btn color="blue-darken-1" variant="text" @click="save"> Save </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
@@ -180,12 +175,8 @@ const save = () => {
       </v-toolbar>
     </template>
     <template v-slot:item.actions="{ item }">
-      <v-icon class="me-2" size="small" @click="editItem(item)">
-        mdi-pencil
-      </v-icon>
-      <v-icon size="small" @click="deleteItem(item)">
-        mdi-delete
-      </v-icon>
+      <v-icon class="me-2" size="small" @click="editItem(item)"> mdi-pencil </v-icon>
+      <v-icon size="small" @click="deleteItem(item)"> mdi-delete </v-icon>
     </template>
     <template v-slot:expanded-row="{ columns, item }">
       <tr>

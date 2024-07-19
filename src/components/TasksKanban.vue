@@ -1,222 +1,226 @@
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue';
-import draggable from 'vuedraggable';
-import { useTasksStore, generateUniqueId } from '@/stores/task/TasksStore';
-import { type ITask, type TASK_STATUS} from '@/types/ITask';
-import { statuses } from '@/constants/task';
+import { ref, reactive, computed, watch, nextTick } from 'vue'
+import draggable from 'vuedraggable'
+import { useTasksStore, generateUniqueId } from '@/stores/task/TasksStore'
+import { type ITask, type TASK_STATUS } from '@/types/ITask'
+import { statuses } from '@/constants/task'
 
 // Используем хранилище задач
-const tasksStore = useTasksStore();
-const dialog = ref(false);
-const dialogDelete = ref(false);
-const searchQuery = ref('');
+const tasksStore = useTasksStore()
+const dialog = ref(false)
+const dialogDelete = ref(false)
+const searchQuery = ref('')
 
 // Параметры пагинации
-const itemsPerPageOptions = [10, 20, 50, 100];
-const itemsPerPage = ref(50);
+const itemsPerPageOptions = [10, 20, 50, 100]
+const itemsPerPage = ref(50)
 const currentPage = reactive({
   'In progress': 1,
-  'Done': 1,
+  Done: 1,
   'To do': 1
-});
+})
 
-const filteredTasksTodo = ref<ITask[]>([]);
-const filteredTasksInProgress = ref<ITask[]>([]);
-const filteredTasksDone = ref<ITask[]>([]);
+const filteredTasksTodo = ref<ITask[]>([])
+const filteredTasksInProgress = ref<ITask[]>([])
+const filteredTasksDone = ref<ITask[]>([])
 
 const getFilteredTasks = () => {
-  getFilteredTasksTodo();
-  getFilteredTasksInProgress();
-  getFilteredTasksDone();
-};
+  getFilteredTasksTodo()
+  getFilteredTasksInProgress()
+  getFilteredTasksDone()
+}
 
 const getFilteredTasksTodo = () => {
-  const startIndex = (currentPage['To do'] - 1) * itemsPerPage.value;
-  const endIndex = currentPage['To do'] * itemsPerPage.value;
+  const startIndex = (currentPage['To do'] - 1) * itemsPerPage.value
+  const endIndex = currentPage['To do'] * itemsPerPage.value
   filteredTasksTodo.value = filteredTasks.value
-    .filter(task => task.task_status === 'To do')
-    .slice(startIndex, endIndex);
-};
+    .filter((task) => task.task_status === 'To do')
+    .slice(startIndex, endIndex)
+}
 
 const getFilteredTasksInProgress = () => {
-  const startIndex = (currentPage['In progress'] - 1) * itemsPerPage.value;
-  const endIndex = currentPage['In progress'] * itemsPerPage.value;
+  const startIndex = (currentPage['In progress'] - 1) * itemsPerPage.value
+  const endIndex = currentPage['In progress'] * itemsPerPage.value
   filteredTasksInProgress.value = filteredTasks.value
-    .filter(task => task.task_status === 'In progress')
-    .slice(startIndex, endIndex);
-};
+    .filter((task) => task.task_status === 'In progress')
+    .slice(startIndex, endIndex)
+}
 
 const getFilteredTasksDone = () => {
-  const startIndex = (currentPage['Done'] - 1) * itemsPerPage.value;
-  const endIndex = currentPage['Done'] * itemsPerPage.value;
+  const startIndex = (currentPage['Done'] - 1) * itemsPerPage.value
+  const endIndex = currentPage['Done'] * itemsPerPage.value
   filteredTasksDone.value = filteredTasks.value
-    .filter(task => task.task_status === 'Done')
-    .slice(startIndex, endIndex);
-};
+    .filter((task) => task.task_status === 'Done')
+    .slice(startIndex, endIndex)
+}
 const totalPagesTodo = computed(() => {
-  const totalTasks = filteredTasks.value.filter(task => task.task_status === 'To do').length;
-  return Math.ceil(totalTasks / itemsPerPage.value);
-});
-
+  const totalTasks = filteredTasks.value.filter((task) => task.task_status === 'To do').length
+  return Math.ceil(totalTasks / itemsPerPage.value)
+})
 
 const totalPagesDone = computed(() => {
-  const totalTasks = filteredTasks.value.filter(task => task.task_status === 'Done').length;
-  return Math.ceil(totalTasks / itemsPerPage.value);
-});
+  const totalTasks = filteredTasks.value.filter((task) => task.task_status === 'Done').length
+  return Math.ceil(totalTasks / itemsPerPage.value)
+})
 
 const totalPagesInProgress = computed(() => {
-  const totalTasks = filteredTasks.value.filter(task => task.task_status === 'In progress').length;
-  return Math.ceil(totalTasks / itemsPerPage.value);
-});
+  const totalTasks = filteredTasks.value.filter((task) => task.task_status === 'In progress').length
+  return Math.ceil(totalTasks / itemsPerPage.value)
+})
 
-const editedIndex = ref(-1);
+const editedIndex = ref(-1)
 const editedItem = reactive<ITask>({
   name: '',
   task_title: '',
   task_description: '',
-  task_status: '',
-});
+  task_status: ''
+})
 const defaultItem: ITask = {
   name: '',
   task_title: '',
   task_description: '',
-  task_status: '',
-};
+  task_status: ''
+}
 
 const filteredTasks = computed(() => {
-  let filtered = tasksStore.tasks;
+  let filtered = tasksStore.tasks
 
   // Фильтрация по поисковому запросу и статусу задачи
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(task =>
-      Object.values(task).some(value =>
-        String(value).toLowerCase().includes(query)
-      )
-    );
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter((task) =>
+      Object.values(task).some((value) => String(value).toLowerCase().includes(query))
+    )
   }
 
-  return filtered;
-});
+  return filtered
+})
 
 const editItem = (item: ITask) => {
-  editedIndex.value = tasksStore.tasks.indexOf(item);
-  Object.assign(editedItem, item);
-  dialog.value = true;
-};
+  editedIndex.value = tasksStore.tasks.indexOf(item)
+  Object.assign(editedItem, item)
+  dialog.value = true
+}
 
 const deleteItem = (item: ITask) => {
-  editedIndex.value = tasksStore.tasks.indexOf(item);
-  Object.assign(editedItem, item);
-  dialogDelete.value = true;
-};
+  editedIndex.value = tasksStore.tasks.indexOf(item)
+  Object.assign(editedItem, item)
+  dialogDelete.value = true
+}
 
 const deleteItemConfirm = () => {
   if (editedItem.id) {
-    tasksStore.deleteItem(editedItem.id);
-    closeDelete();
+    tasksStore.deleteItem(editedItem.id)
+    closeDelete()
   }
-};
+}
 
 const close = () => {
-  dialog.value = false;
+  dialog.value = false
   nextTick(() => {
-    Object.assign(editedItem, defaultItem);
-    editedIndex.value = -1;
-  });
-};
+    Object.assign(editedItem, defaultItem)
+    editedIndex.value = -1
+  })
+}
 
 const closeDelete = () => {
-  dialogDelete.value = false;
+  dialogDelete.value = false
   nextTick(() => {
-    Object.assign(editedItem, defaultItem);
-    editedIndex.value = -1;
-  });
-};
+    Object.assign(editedItem, defaultItem)
+    editedIndex.value = -1
+  })
+}
 
 const closeAdd = () => {
-  showAddDialog.value = false;
+  showAddDialog.value = false
   nextTick(() => {
-    Object.assign(editedItem, defaultItem);
-    editedIndex.value = -1;
-  });
-};
+    Object.assign(editedItem, defaultItem)
+    editedIndex.value = -1
+  })
+}
 
 const save = () => {
-  tasksStore.save(editedItem, editedIndex.value);
-  close();
-};
+  tasksStore.save(editedItem, editedIndex.value)
+  close()
+}
 
-const expandedItems = ref<{ [key: number]: boolean }>({});
+const expandedItems = ref<{ [key: number]: boolean }>({})
 const toggleExpand = (id: number) => {
-  expandedItems.value[id] = !expandedItems.value[id];
-};
+  expandedItems.value[id] = !expandedItems.value[id]
+}
 
-const showAddDialog = ref(false);
+const showAddDialog = ref(false)
 const newTask = reactive<ITask>({
   id: 0,
   name: '',
   task_title: '',
   task_description: '',
   task_status: '' // Это будет установлено по колонке
-});
+})
 
 const addNewTask = (status: TASK_STATUS) => {
-  newTask.task_status = status;
-  showAddDialog.value = true;
-};
+  newTask.task_status = status
+  showAddDialog.value = true
+}
 
 const saveNewTask = () => {
-  newTask.id = generateUniqueId(newTask.id, tasksStore.tasks.length + 1);
-  tasksStore.save(newTask, -1); // -1 означает новый элемент
-  showAddDialog.value = false;
+  newTask.id = generateUniqueId(newTask.id, tasksStore.tasks.length + 1)
+  tasksStore.save(newTask, -1) // -1 означает новый элемент
+  showAddDialog.value = false
   nextTick(() => {
-    Object.assign(newTask, defaultItem);
-  });
-};
+    Object.assign(newTask, defaultItem)
+  })
+}
 
 watch(dialog, (val) => {
-  if (!val) close();
-});
+  if (!val) close()
+})
 
 watch(dialogDelete, (val) => {
-  if (!val) closeDelete();
-});
+  if (!val) closeDelete()
+})
 
 watch(showAddDialog, (val) => {
-  if (!val) closeAdd();
-});
+  if (!val) closeAdd()
+})
 
-watch([tasksStore.tasks, itemsPerPage, searchQuery], () => {
-  getFilteredTasks();
-}, { immediate: true });
+watch(
+  [tasksStore.tasks, itemsPerPage, searchQuery],
+  () => {
+    getFilteredTasks()
+  },
+  { immediate: true }
+)
 
 const onDragEnd = (status: TASK_STATUS, event) => {
-  const draggedItemId = filteredTasks.value.find(task => task.task_status === status)?.id;
-  const newStatus = event.to.parentNode.querySelector('h3').innerHTML
-  tasksStore.updateTaskStatus(draggedItemId, newStatus)
-};
+  const draggedItem = filteredTasks.value.find((task) => task.task_status === status)
+  if (draggedItem) {
+    const draggedItemId = draggedItem.id
+    const newStatus = event.to.parentNode.querySelector('h3').innerHTML
+    if (draggedItemId) {
+      tasksStore.updateTaskStatus(draggedItemId, newStatus)
+    }
+  }
+}
 </script>
 
 <template>
-  <v-select
-    v-model="itemsPerPage"
-    :items="itemsPerPageOptions"
-    label="Items per page"
-  ></v-select>
+  <v-select v-model="itemsPerPage" :items="itemsPerPageOptions" label="Items per page"></v-select>
 
-  <v-text-field
-    v-model="searchQuery"
-    label="Search"
-    class="mt-3"
-  ></v-text-field>
+  <v-text-field v-model="searchQuery" label="Search" class="mt-3"></v-text-field>
 
   <div class="row">
     <div class="col-4" v-for="(status, index) in statuses" :key="index">
       <h3>{{ status }}</h3>
 
       <template v-if="status === 'In progress'">
-        <draggable :list="filteredTasksInProgress" class="list-group" group="a" item-key="id" @end="onDragEnd('In progress', $event)">
+        <draggable
+          :list="filteredTasksInProgress"
+          class="list-group"
+          group="a"
+          item-key="id"
+          @end="onDragEnd('In progress', $event)"
+        >
           <template #item="{ element }">
             <div class="list-group-item item" :key="element.id">
               <div class="header" @click="toggleExpand(element.id)">
@@ -247,24 +251,27 @@ const onDragEnd = (status: TASK_STATUS, event) => {
         </draggable>
 
         <div class="pagination-controls" v-if="totalPagesInProgress > 1">
-  <v-btn
-    :disabled="currentPage[status] === 1"
-    @click="currentPage[status] -= 1"
-  >
-    Previous
-  </v-btn>
-  <span>Page {{ currentPage[status] }} of {{ totalPagesInProgress }}</span>
-  <v-btn
-    :disabled="currentPage[status] === totalPagesInProgress"
-    @click="currentPage[status] += 1"
-  >
-    Next
-  </v-btn>
-</div>
+          <v-btn :disabled="currentPage[status] === 1" @click="currentPage[status] -= 1">
+            Previous
+          </v-btn>
+          <span>Page {{ currentPage[status] }} of {{ totalPagesInProgress }}</span>
+          <v-btn
+            :disabled="currentPage[status] === totalPagesInProgress"
+            @click="currentPage[status] += 1"
+          >
+            Next
+          </v-btn>
+        </div>
       </template>
 
       <template v-else-if="status === 'Done'">
-        <draggable :list="filteredTasksDone" class="list-group" group="a" item-key="id" @end="onDragEnd('Done', $event)">
+        <draggable
+          :list="filteredTasksDone"
+          class="list-group"
+          group="a"
+          item-key="id"
+          @end="onDragEnd('Done', $event)"
+        >
           <template #item="{ element }">
             <div class="list-group-item item" :key="element.id">
               <div class="header" @click="toggleExpand(element.id)">
@@ -294,24 +301,27 @@ const onDragEnd = (status: TASK_STATUS, event) => {
           </template>
         </draggable>
         <div class="pagination-controls" v-if="totalPagesDone > 1">
-  <v-btn
-    :disabled="currentPage[status] === 1"
-    @click="currentPage[status] -= 1"
-  >
-    Previous
-  </v-btn>
-  <span>Page {{ currentPage[status] }} of {{ totalPagesDone}}</span>
-  <v-btn
-    :disabled="currentPage[status] === totalPagesDone"
-    @click="currentPage[status] += 1"
-  >
-    Next
-  </v-btn>
-</div>
+          <v-btn :disabled="currentPage[status] === 1" @click="currentPage[status] -= 1">
+            Previous
+          </v-btn>
+          <span>Page {{ currentPage[status] }} of {{ totalPagesDone }}</span>
+          <v-btn
+            :disabled="currentPage[status] === totalPagesDone"
+            @click="currentPage[status] += 1"
+          >
+            Next
+          </v-btn>
+        </div>
       </template>
 
       <template v-else-if="status === 'To do'">
-        <draggable :list="filteredTasksTodo" class="list-group" group="a" item-key="id" @end="onDragEnd('To do', $event)">
+        <draggable
+          :list="filteredTasksTodo"
+          class="list-group"
+          group="a"
+          item-key="id"
+          @end="onDragEnd('To do', $event)"
+        >
           <template #item="{ element }">
             <div class="list-group-item item" :key="element.id">
               <div class="header" @click="toggleExpand(element.id)">
@@ -342,22 +352,18 @@ const onDragEnd = (status: TASK_STATUS, event) => {
         </draggable>
 
         <div class="pagination-controls" v-if="totalPagesTodo > 1">
-  <v-btn
-    :disabled="currentPage[status] === 1"
-    @click="currentPage[status] -= 1"
-  >
-    Previous
-  </v-btn>
-  <span>Page {{ currentPage[status] }} of {{ totalPagesTodo }}</span>
-  <v-btn
-    :disabled="currentPage[status] === totalPagesTodo"
-    @click="currentPage[status] += 1"
-  >
-    Next
-  </v-btn>
-</div>
+          <v-btn :disabled="currentPage[status] === 1" @click="currentPage[status] -= 1">
+            Previous
+          </v-btn>
+          <span>Page {{ currentPage[status] }} of {{ totalPagesTodo }}</span>
+          <v-btn
+            :disabled="currentPage[status] === totalPagesTodo"
+            @click="currentPage[status] += 1"
+          >
+            Next
+          </v-btn>
+        </div>
       </template>
-
     </div>
   </div>
   <!-- Add Task Dialog -->
@@ -367,24 +373,13 @@ const onDragEnd = (status: TASK_STATUS, event) => {
         <span class="headline">Add New Task</span>
       </v-card-title>
       <v-card-text>
-        <v-text-field
-          v-model="newTask.name"
-          label="Name"
-          required
-        ></v-text-field>
-        <v-text-field
-          v-model="newTask.task_title"
-          label="Title"
-          required
-        ></v-text-field>
-        <v-textarea
-          v-model="newTask.task_description"
-          label="Description"
-        ></v-textarea>
+        <v-text-field v-model="newTask.name" label="Name" required></v-text-field>
+        <v-text-field v-model="newTask.task_title" label="Title" required></v-text-field>
+        <v-textarea v-model="newTask.task_description" label="Description"></v-textarea>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn  @click="closeAdd">Cancel</v-btn>
+        <v-btn @click="closeAdd">Cancel</v-btn>
         <v-btn color="primary" @click="saveNewTask">Save</v-btn>
       </v-card-actions>
     </v-card>
@@ -397,24 +392,13 @@ const onDragEnd = (status: TASK_STATUS, event) => {
         <span class="headline">Edit Task</span>
       </v-card-title>
       <v-card-text>
-        <v-text-field
-          v-model="editedItem.name"
-          label="Name"
-          required
-        ></v-text-field>
-        <v-text-field
-          v-model="editedItem.task_title"
-          label="Title"
-          required
-        ></v-text-field>
-        <v-textarea
-          v-model="editedItem.task_description"
-          label="Description"
-        ></v-textarea>
+        <v-text-field v-model="editedItem.name" label="Name" required></v-text-field>
+        <v-text-field v-model="editedItem.task_title" label="Title" required></v-text-field>
+        <v-textarea v-model="editedItem.task_description" label="Description"></v-textarea>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn  @click="close">Cancel</v-btn>
+        <v-btn @click="close">Cancel</v-btn>
         <v-btn color="primary" @click="save">Save</v-btn>
       </v-card-actions>
     </v-card>
@@ -426,9 +410,7 @@ const onDragEnd = (status: TASK_STATUS, event) => {
       <v-card-title>
         <span class="headline">Confirm Deletion</span>
       </v-card-title>
-      <v-card-text>
-        Are you sure you want to delete this task?
-      </v-card-text>
+      <v-card-text> Are you sure you want to delete this task? </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn @click="closeDelete">Cancel</v-btn>
@@ -437,7 +419,6 @@ const onDragEnd = (status: TASK_STATUS, event) => {
     </v-card>
   </v-dialog>
 </template>
-
 
 <style scoped lang="scss">
 .row {
@@ -596,10 +577,10 @@ h3 {
   cursor: move;
   user-select: none; /* Prevent text selection during drag */
 }
-.actions{
-    margin-top: 10px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
+.actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>

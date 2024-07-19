@@ -20,9 +20,9 @@ const addRandomStatusToObjects = (arr: ITask[]): ITask[] => {
 }
 
 export const generateUniqueId = (baseId: number | string | undefined, index: number): string => {
-  const timestamp = new Date().getTime(); 
-  const randomSuffix = Math.floor(Math.random() * 10000); 
-  return `${String(baseId || 'undefined')}_${timestamp}_${randomSuffix}_${index}`;
+  const timestamp = new Date().getTime()
+  const randomSuffix = Math.floor(Math.random() * 10000)
+  return `${String(baseId || 'undefined')}_${timestamp}_${randomSuffix}_${index}`
 }
 
 const multiplyArray = (arr: ITask[], times: number): ITask[] => {
@@ -42,7 +42,7 @@ const multiplyArray = (arr: ITask[], times: number): ITask[] => {
 
 export const useTasksStore = defineStore('tasks', () => {
   const taskSwitch = ref(true)
-  const tasksFormat = computed(() => taskSwitch.value ? TasksTable : TasksKanban)
+  const tasksFormat = computed(() => (taskSwitch.value ? TasksTable : TasksKanban))
   const loader = ref(false)
   const tasks = ref<ITask[]>([])
 
@@ -60,14 +60,14 @@ export const useTasksStore = defineStore('tasks', () => {
   }
 
   const editItem = (item: ITask) => {
-    const index = tasks.value.findIndex(task => task.id === item.id)
+    const index = tasks.value.findIndex((task) => task.id === item.id)
     if (index !== -1) {
       tasks.value[index] = { ...tasks.value[index], ...item }
     }
   }
 
-  const deleteItem = (id: number) => {
-    const index = tasks.value.findIndex(task => task.id === id)
+  const deleteItem = (id: number | string) => {
+    const index = tasks.value.findIndex((task) => task.id === id)
     if (index !== -1) {
       tasks.value.splice(index, 1)
     }
@@ -81,8 +81,8 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  const updateTaskStatus = (id: number, newStatus: TASK_STATUS) => {
-    const index = tasks.value.findIndex(task => task.id === id)
+  const updateTaskStatus = (id: number | string, newStatus: TASK_STATUS) => {
+    const index = tasks.value.findIndex((task) => task.id === id)
     if (index !== -1) {
       tasks.value[index].task_status = newStatus
     } else {
@@ -90,5 +90,15 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  return { loader, tasks, getTasks, tasksFormat, editItem, deleteItem, save, taskSwitch, updateTaskStatus }
+  return {
+    loader,
+    tasks,
+    getTasks,
+    tasksFormat,
+    editItem,
+    deleteItem,
+    save,
+    taskSwitch,
+    updateTaskStatus
+  }
 })
